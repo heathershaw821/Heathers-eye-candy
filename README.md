@@ -10,6 +10,10 @@ lovingly packaged with matching icons, themes, and modular themed dotfile packag
 
 ![CyberPink Screenshot](screenshots/screenshot1.png)
 
+
+![CyberPink Screenshot2](screenshots/screenshot2.png)
+
+
 - `themes`: Beautiful window manager themes
   - GTK2/3/3.2
   - unity
