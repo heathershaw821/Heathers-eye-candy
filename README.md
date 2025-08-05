@@ -23,5 +23,7 @@ lovingly packaged with matching icons, themes, and modular themed dotfile packag
   - neofetch
   - xfce4-terminal
   - *And More!!!*
+- `fonts`: A curated collection of amazing Nerd Fonts
+- `wallpapers`: My current favorite wallpapers, often I like to tweak these a bit for taste
 
 Download the latest release [here](https://github.com/heathershaw821/Heathers-eye-candy/releases)!!!!
