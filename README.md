@@ -7,7 +7,9 @@ lovingly packaged with matching icons, themes, and modular themed dotfile packag
 
 ## Download the latest version on the [Releases Page](https://github.com/heathershaw821/Heathers-eye-candy/releases)
 
+---
 
+### CyberPink <3
 ![CyberPink Screenshot](screenshots/screenshot1.png)
 
 
