@@ -1,6 +1,6 @@
 # Heather's Eye Candy
 
-![screenshots/screenshot1.png](CyberPink Screenshot)
+![CyberPink Screenshot](screenshots/screenshot1.png)
 
 **Heather's Eye Candy** is a handcrafted Linux theming project. Each theme is
 lovingly packaged with matching icons, themes, and modular themed dotfile packages.
