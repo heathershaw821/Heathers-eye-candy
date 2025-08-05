@@ -2,7 +2,7 @@
 
 ![CyberPink Screenshot](screenshots/screenshot1.png)
 
-**Heather's Eye Candy** is a handcrafted Linux theming project. Each theme is
+**Heather's Eye Candy** is a handcrafted set of beautiful, robust themes for women in technology.. Each theme is
 lovingly packaged with matching icons, themes, and modular themed dotfile packages.
 
 ---
