@@ -24,7 +24,7 @@ lovingly packaged with matching icons, themes, and modular themed dotfile packag
   - openbox
   - cinnamin
 
-- `icons`: Handmade Iconsets
+- `icons`: Gorgeous handmade icon sets
 - `packages`: Modular config bundles
   - Bashrc
   - neofetch
