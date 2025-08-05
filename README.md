@@ -1,13 +1,14 @@
 # Heather's Eye Candy
 
-![CyberPink Screenshot](screenshots/screenshot1.png)
-
 **Heather's Eye Candy** is a handcrafted set of beautiful, robust themes for women in technology.. Each theme is
 lovingly packaged with matching icons, themes, and modular themed dotfile packages.
 
 ---
 
 ## Included Components In Each Theme [Release](https://github.com/heathershaw821/Heathers-eye-candy/releases)
+
+
+![CyberPink Screenshot](screenshots/screenshot1.png)
 
 - `themes`: Beautiful window manager themes
   - GTK2/3/3.2
