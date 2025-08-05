@@ -5,7 +5,7 @@ lovingly packaged with matching icons, themes, and modular themed dotfile packag
 
 ---
 
-## Included Components In Each Theme [Release](https://github.com/heathershaw821/Heathers-eye-candy/releases)
+## Download the latest version on the [Releases Page](https://github.com/heathershaw821/Heathers-eye-candy/releases)
 
 
 ![CyberPink Screenshot](screenshots/screenshot1.png)
