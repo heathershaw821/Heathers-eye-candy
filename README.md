@@ -5,7 +5,7 @@ lovingly packaged with matching icons, themes, and modular themed dotfile packag
 
 ---
 
-## Included Components In Each Theme [Release]()
+## Included Components In Each Theme [Release](https://github.com/heathershaw821/Heathers-eye-candy/releases)
 
 - `themes`: Beautiful window manager themes
   - GTK2/3/3.2
@@ -21,3 +21,5 @@ lovingly packaged with matching icons, themes, and modular themed dotfile packag
   - neofetch
   - xfce4-terminal
   - *And More!!!*
+
+Download the latest release [here](https://github.com/heathershaw821/Heathers-eye-candy/releases)!!!!
