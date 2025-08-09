@@ -55,7 +55,7 @@ index 4543341e00c..e35d4a6cdbd 100644
 +
 +@itemize @bullet
 +@item ad | address
-+The style used to for numerical addresses.
++The style used for numerical addresses.
 +@item ao | offset
 +The style used for numerical address offsets.
 +@item as directive
