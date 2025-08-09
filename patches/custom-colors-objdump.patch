@@ -1,0 +1,504 @@
+diff --git a/binutils/doc/binutils.texi b/binutils/doc/binutils.texi
+index 4543341e00c..e35d4a6cdbd 100644
+--- a/binutils/doc/binutils.texi
++++ b/binutils/doc/binutils.texi
+@@ -3118,6 +3118,91 @@ The @option{-Z} option is meant to be used in conunction with the
+ compressed sections before displaying their contents.
+ @end table
+ 
++@anchor{Customizing Objdump's Colors}
++@section Customizing Objdump's Colors
++
++The environment variable @code{OBJDUMP_COLORS} can be used to control
++the colors objdump uses for it's disassembler output.
++
++The format of @code{OBJDUMP_COLORS} is given by @var{<objdump_colors>}
++in:
++
++@smallexample
++<objdump_colors> ::= <mode_selection> ":" <style_list>
++                   | <mode_selection>
++                   | <style_list>
++
++<mode_selection> ::= "OFF" | "B" | "X"
++
++<style_list> ::= <style_item>
++               | <style_item> ":" <style_list>
++
++<style_item> ::= <style_code> "=" <escape_string>
++
++<style_code> ::= "ad" | "ao" | "as" | "cm" | "im"
++               | "mn" | "rg" | "sm" | "sy" | "tx"
++               | "address" | "offset" | "directive"
++               | "comment" | "immediate" | "mnemonic"
++               | "register" | "submnemonic" | "symbol"
++               | "text"
++@end smallexample
++
++When objdump disassembles to a terminal, and the
++@option{--disassembler-color} argument is not used, objdump will, by
++default, behave as if @option{--disassembler-color=color} had been
++used.
++
++If @var{<mode_selection>} is set to @code{off} then objdump will
++behave as if @option{--disassembler-color=off} was given by default.
++
++If @var{<mode_selection>} is set to @code{color} then objdump will behave
++as if @option{--disassembler-color=color} was given by default.
++
++If @var{<mode_selection>} is set to @code{extended} then objdump will behave
++as if @option{--disassembler-color=extended-color} was given by
++default.
++
++Each @var{<style_code>} is a two letter sequence that identifies a
++particular part of the disassembler output, the valid codes are:
++
++@itemize @bullet
++@item ad | address
++The style used to for numerical addresses.
++@item ao | offset
++The style used for numerical address offsets.
++@item as directive
++The style used for assembler directives.
++@item cm | comment
++The style used for comments.
++@item im | immediate
++The style used for numerical immediates.
++@item mn | mnemonic
++The style used for the primary instruction mnemonic.
++@item rg | register
++The style used for register names.
++@item sm | submnemonic
++The style used for any secondary mnemonics within an instruction.
++@item sy | symbol
++The style used for symbol names.
++@item tx | text
++The style used for anything that is not covered by any of the above
++styles.  This style should not usually be modified, this will leave
++this text styled the same as the rest of objdump's output.
++@end itemize
++
++Each @var{<style_item>} associates a @var{<style_code>} with an
++@var{<escape_string>}.  Each escape string is a series of digits and
++@code{;} characters, and will be used as part of an escape sequence to
++add styling to the disassembler output.  Each @var{<escape_string>}
++has @code{\033[} added as a prefix, and @code{m} added as a suffix to
++create the complete escape sequence.
++
++Alternatively, if an @var{<escape_string>} is empty then no styling is
++added to this element of the disassembler output.
++
++Any styles specified in the @var{<style_list>} override the
++corresponding style in the objdump output.  Any style not specified in
++the @var{<style_list>} will retain its default styling.
+ @c man end
+ 
+ @ignore
+diff --git a/binutils/objdump.c b/binutils/objdump.c
+index 0bea4d0761c..4921d76a067 100644
+--- a/binutils/objdump.c
++++ b/binutils/objdump.c
+@@ -159,6 +159,9 @@ static enum color_selection
+   off;
+ #endif
+ 
++/* The environment variable to read for color information.  */
++static const char *objdump_colors_var = "OBJDUMP_COLORS";
++
+ static int dump_any_debugging;
+ static int demangle_flags = DMGL_ANSI | DMGL_PARAMS;
+ 
+@@ -2446,79 +2449,273 @@ objdump_sprintf (SFILE *f, const char *format, ...)
+   return n;
+ }
+ 
+-/* Return an integer greater than, or equal to zero, representing the color
+-   for STYLE, or -1 if no color should be used.  */
++/* Figure out a default disassembler color mode.  */
+ 
+-static int
+-objdump_color_for_disassembler_style (enum disassembler_style style)
++static enum color_selection
++objdump_default_disassembler_color_mode (void)
+ {
+-  int color = -1;
++  enum color_selection mode;
+ 
+-  if (style == dis_style_comment_start)
+-    disassembler_in_comment = true;
++  if (isatty (1))
++    {
++      const char *tmp = getenv (objdump_colors_var);
++
++      if (tmp == NULL || strncmp (tmp, "color", 5) == 0)
++	mode = on;
++      if (strncmp (tmp, "extended", 8) == 0)
++	mode = extended;
++      else if (strncmp (tmp, "off", 3) == 0)
++	mode = off;
++      else
++	mode = on;
++    }
++  else
++    mode = off;
++
++  return mode;
++}
++
++/* An array of strings, one for each entry in enum disassembler_style.
++   Each string here is either NULL or something that can be used in an
++   escape sequence to style the disassembler output.  */
++static const char *disasm_styles[10] = { NULL };
++
++static const char **
++objdump_find_disasm_styles_entry (const char *code)
++{
++  enum disassembler_style style;
++  unsigned int style_idx;
++
++  struct {
++    const char *name;
++    enum disassembler_style style;
++  } keys[] = {
++    { "ad=",  dis_style_address },
++    { "ao=",  dis_style_address_offset },
++    { "as=",  dis_style_assembler_directive },
++    { "cm=",  dis_style_comment_start },
++    { "im=",  dis_style_immediate },
++    { "mn=",  dis_style_mnemonic },
++    { "rg=",  dis_style_register },
++    { "sm=",  dis_style_sub_mnemonic },
++    { "sy=",  dis_style_symbol },
++    { "tx=",  dis_style_text },
++    { "address=",      dis_style_address },
++    { "offset=",       dis_style_address_offset },
++    { "directive=",    dis_style_assembler_directive },
++    { "comment=",      dis_style_comment_start },
++    { "immediate=",    dis_style_immediate },
++    { "mnemonic=",     dis_style_mnemonic },
++    { "register=",     dis_style_register },
++    { "submnemonic=",  dis_style_sub_mnemonic },
++    { "symbol=",       dis_style_symbol },
++    { "text=",         dis_style_text },
++  };
++
++  size_t i;
++  for (i = 0; i < sizeof(keys)/sizeof(keys[0]); i++) {
++    size_t len = strlen(keys[i].name);
++    if (strncmp(keys[i].name, code, len) == 0) {
++      style = keys[i].style;
++      style_idx = (unsigned int) style;
++      if (style_idx >= (sizeof(disasm_styles) / sizeof(disasm_styles[0])))
++        return NULL;
++      return &disasm_styles[style_idx];
++    }
++  }
+ 
++  return NULL;
++}
++
++
++/* This function should be called at most once, before we first try to use
++   the global disasm_styles array.  This function fills the disasm_styles
++   array with suitable strings based on which disassembler-color arguments
++   the user passed to objdump, as well as the OBJDUMP_COLORS environment
++   variable, if this is set.  */
++
++static void
++objdump_fill_styles_array (void)
++{
+   if (disassembler_color == on)
+     {
+-      if (disassembler_in_comment)
+-	return color;
+-
+-      switch (style)
+-	{
+-	case dis_style_symbol:
+-	  color = 32;
+-	  break;
+-        case dis_style_assembler_directive:
+-	case dis_style_sub_mnemonic:
+-	case dis_style_mnemonic:
+-	  color = 33;
+-	  break;
+-	case dis_style_register:
+-	  color = 34;
+-	  break;
+-	case dis_style_address:
+-        case dis_style_address_offset:
+-	case dis_style_immediate:
+-	  color = 35;
+-	  break;
+-	default:
+-	case dis_style_text:
+-	  color = -1;
+-	  break;
+-	}
++      /* The defaults colors for --disassembler-color=color.  */
++      disasm_styles[(unsigned int) dis_style_address] = "35";
++      disasm_styles[(unsigned int) dis_style_address_offset] = "35";
++      disasm_styles[(unsigned int) dis_style_assembler_directive] = "33";
++      disasm_styles[(unsigned int) dis_style_comment_start] = NULL;
++      disasm_styles[(unsigned int) dis_style_immediate] = "35";
++      disasm_styles[(unsigned int) dis_style_mnemonic] = "33";
++      disasm_styles[(unsigned int) dis_style_register] = "34";
++      disasm_styles[(unsigned int) dis_style_sub_mnemonic] = "33";
++      disasm_styles[(unsigned int) dis_style_symbol] = "32";
++      disasm_styles[(unsigned int) dis_style_text] = NULL;
+     }
+   else if (disassembler_color == extended)
+     {
+-      if (disassembler_in_comment)
+-	return 250;
++      /* The defaults colors for --disassembler-color=extended-color.  */
++      disasm_styles[(unsigned int) dis_style_address] = "38;5;134";
++      disasm_styles[(unsigned int) dis_style_address_offset] = "38;5;134";
++      disasm_styles[(unsigned int) dis_style_assembler_directive] = "38;5;142";
++      disasm_styles[(unsigned int) dis_style_comment_start] = "38;5;250";
++      disasm_styles[(unsigned int) dis_style_immediate] = "38;5;134";
++      disasm_styles[(unsigned int) dis_style_mnemonic] = "38;5;142";
++      disasm_styles[(unsigned int) dis_style_register] = "38;5;27";
++      disasm_styles[(unsigned int) dis_style_sub_mnemonic] = "38;5;142";
++      disasm_styles[(unsigned int) dis_style_symbol] = "38;5;40";
++      disasm_styles[(unsigned int) dis_style_text] = NULL;
++    }
++  else if (disassembler_color != off)
++    bfd_fatal (_("disassembly color not correctly selected"));
+ 
+-      switch (style)
++  if (disassembler_color != off)
++    {
++      const char *env_var = getenv (objdump_colors_var);
++      if (env_var != NULL)
+ 	{
+-	case dis_style_symbol:
+-	  color = 40;
+-	  break;
+-        case dis_style_assembler_directive:
+-	case dis_style_sub_mnemonic:
+-	case dis_style_mnemonic:
+-	  color = 142;
+-	  break;
+-	case dis_style_register:
+-	  color = 27;
+-	  break;
+-	case dis_style_address:
+-        case dis_style_address_offset:
+-	case dis_style_immediate:
+-	  color = 134;
+-	  break;
+-	default:
+-	case dis_style_text:
+-	  color = -1;
+-	  break;
++	  /* Create a copy of the colors environment variable.  The
++	     disasm_styles array will point directly into our copy, which
++	     we will modify to insert '\0' at appropriate places.  */
++	  static char *env_colors = NULL;
++	  env_colors = strdup (env_var);
++	  if (!env_colors)
++	    bfd_fatal (_("failed to copy environment variable"));
++
++	  /* Normalize the string:
++	     - remove backslash-newline continuations ( '\' + '\n' )
++	     - convert bare newlines to ':' separators
++	     - drop spaces/tabs that immediately follow a removed newline
++	  */
++	  {
++	    char *r = env_colors;  /* read pointer */
++	    char *w = env_colors;  /* write pointer */
++	    while (*r != '\0')
++	      {
++		/* handle backslash + newline (line continuation) */
++		if (*r == '\\' && (r[1] == '\n' || (r[1] == '\r' && r[2] == '\n')))
++		  {
++		    r++;
++		    if (*r == '\r')
++		      r++;
++		    if (*r == '\n')
++		      r++;
++
++		    /* skip any spaces/tabs after the continuation */
++		    while (*r == ' ' || *r == '\t')
++		      r++;
++
++		    continue; /* do not write anything -> join lines */
++		  }
++
++		/* convert bare newline (or CRLF) to ':' separator, then skip
++		   spaces/tabs after it */
++		if (*r == '\n' || (*r == '\r' && r[1] == '\n'))
++		  {
++		    *w++ = ':'; /* treat newline as a separator */
++		    if (*r == '\r')
++		      r++;
++		    if (*r == '\n')
++		      r++;
++		    while (*r == ' ' || *r == '\t')
++		      r++;
++		    continue;
++		  }
++
++		/* otherwise copy character */
++		*w++ = *r++;
++	      }
++	    *w = '\0';
++	  }
++
++	  /* Use a local pointer so we don't lose the start of the strdup buffer. */
++	  char *ptr = env_colors;
++
++	  /* Skip any leading whitespace before examining a possible mode specifier */
++	  while (*ptr == ' ' || *ptr == '\t')
++	    ptr++;
++
++	  /* Skip a leading color mode specifier.  */
++	  if (strncmp (ptr, "off", 3) == 0
++	      || strncmp (ptr, "color", 5) == 0
++	      || strncmp (ptr, "extended", 8) == 0)
++	    {
++	      while (*ptr != ':' && *ptr != '\0')
++		++ptr;
++	    }
++
++	  /* Skip any leading colon, space, or newline (although newlines were normalized) */
++	  while (*ptr == ':' || *ptr == ' ' || *ptr == '\n' || *ptr == '\t')
++	    ptr++;
++	  const char **style_entry;
++	  while (*ptr != '\0')
++	  {
++	      style_entry = objdump_find_disasm_styles_entry (ptr);
++
++	      /* Find '=' for this entry; if none, stop/skip */
++	      char *eq = strchr (ptr, '=');
++	      if (!eq)
++	          break;
++	  
++	      /* Advance ptr to the value (just after '='). */
++	      ptr = eq + 1;
++	  
++	      if (style_entry != NULL)
++	      {
++	          if (*ptr == '\0' || *ptr == ':')
++	              *style_entry = NULL;
++	          else
++	          {
++	              const char *esc_str = ptr;
++	  
++	              for (; *ptr != '\0' && *ptr != ':'; ++ptr)
++	              {
++	                  if (!ISDIGIT (*ptr) && *ptr != ';')
++	                      esc_str = NULL;
++		      }
++	              *style_entry = esc_str;
++	          }
++	      }
++	  
++	      if (*ptr == ':')
++	      {
++	          *ptr = '\0';
++	          ptr++;
++	      }
++	  }
++	  
+ 	}
+     }
+-  else if (disassembler_color != off)
+-    bfd_fatal (_("disassembly color not correctly selected"));
++}
++
++
++/* Return the escape code sequence for STYLE, or NULL if no escape code
++   should be emitted for this style.  */
++
++static const char *
++objdump_color_for_disassembler_style (enum disassembler_style style)
++{
++  unsigned int style_idx;
++  static bool color_init = false;
++
++  if (!color_init)
++    {
++      objdump_fill_styles_array ();
++      color_init = true;
++    }
++
++  /* If this is the start of a comment, or we previously saw the start of a
++     comment, then force the style to comment style.  */
++  if (style == dis_style_comment_start)
++    disassembler_in_comment = true;
++  if (disassembler_in_comment)
++    style = dis_style_comment_start;
++
++  /* Select and return the appropriate style from the styles array.  */
++  style_idx = (unsigned int) style;
++  if (style_idx > (sizeof (disasm_styles) / sizeof (disasm_styles[0])))
++    return NULL;
++  return disasm_styles[style_idx];
+ 
+-  return color;
+ }
+ 
+ /* Like objdump_sprintf, but add in escape sequences to highlight the
+@@ -2530,19 +2727,17 @@ objdump_styled_sprintf (SFILE *f, enum disassembler_style style,
+ {
+   size_t n;
+   va_list args;
+-  int color = objdump_color_for_disassembler_style (style);
++  const char *color_esc_seq = objdump_color_for_disassembler_style (style);
+ 
+-  if (color >= 0)
++  if (color_esc_seq != NULL)
+     {
+       while (1)
+ 	{
+ 	  size_t space = f->alloc - f->pos;
+ 
+-	  if (disassembler_color == on)
+-	    n = snprintf (f->buffer + f->pos, space, "\033[%dm", color);
+-	  else
+-	    n = snprintf (f->buffer + f->pos, space, "\033[38;5;%dm", color);
+-	  if (space > n)
++	  n = snprintf (f->buffer + f->pos, space, "\033[%sm",
++			color_esc_seq);
++	  if (n < space)
+ 	    break;
+ 
+ 	  f->alloc = (f->alloc + n) * 2;
+@@ -2559,7 +2754,7 @@ objdump_styled_sprintf (SFILE *f, enum disassembler_style style,
+       n = vsnprintf (f->buffer + f->pos, space, format, args);
+       va_end (args);
+ 
+-      if (space > n)
++      if (n < space)
+ 	break;
+ 
+       f->alloc = (f->alloc + n) * 2;
+@@ -2567,7 +2762,7 @@ objdump_styled_sprintf (SFILE *f, enum disassembler_style style,
+     }
+   f->pos += n;
+ 
+-  if (color >= 0)
++  if (color_esc_seq != NULL)
+     {
+       while (1)
+ 	{
+@@ -2575,7 +2770,7 @@ objdump_styled_sprintf (SFILE *f, enum disassembler_style style,
+ 
+ 	  n = snprintf (f->buffer + f->pos, space, "\033[0m");
+ 
+-	  if (space > n)
++	  if (n < space)
+ 	    break;
+ 
+ 	  f->alloc = (f->alloc + n) * 2;
+@@ -6413,7 +6608,7 @@ main (int argc, char **argv)
+     }
+ 
+   if (disassembler_color == on_if_terminal_output)
+-    disassembler_color = isatty (1) ? on : off;
++    disassembler_color = objdump_default_disassembler_color_mode ();
+ 
+   if (show_version)
+     print_version ("objdump");
