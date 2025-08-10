@@ -15,6 +15,8 @@ lovingly packaged with matching icons, themes, and modular themed dotfile packag
 
 ![CyberPink Screenshot2](screenshots/screenshot2.png)
 
+![CyberPink Screenshot2](screenshots/screenshot3.png)
+
 
 ## What's in the box?
 
@@ -29,7 +31,7 @@ lovingly packaged with matching icons, themes, and modular themed dotfile packag
 - `icons`: Gorgeous handmade icon sets
 - `packages`: Modular config bundles
   - Bashrc
-  - neofetch
+  - neovim
   - xfce4-terminal
   - *And More!!!*
 - `fonts`: A curated collection of amazing Nerd Fonts
