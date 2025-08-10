@@ -30,6 +30,14 @@ lovingly packaged with matching icons, themes, and modular themed dotfile packag
 
 Download the latest release [here](https://github.com/heathershaw821/Heathers-eye-candy/releases)!!!!
 
+---
+
+## Enhanced Themability Patches!
+
+In the [patches folder](./patches) of this repository, you will find patches that add enhanced capabilities for theming various open-source tools.
+
+---
+
 ### CyberPink <3
 ![CyberPink Screenshot](screenshots/screenshot1.png)
 
