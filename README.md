@@ -9,15 +9,6 @@ lovingly packaged with matching icons, themes, and modular themed dotfile packag
 
 ---
 
-### CyberPink <3
-![CyberPink Screenshot](screenshots/screenshot1.png)
-
-
-![CyberPink Screenshot2](screenshots/screenshot2.png)
-
-![CyberPink Screenshot2](screenshots/screenshot3.png)
-
-
 ## What's in the box?
 
 - `themes`: Beautifully crafted window manager themes
@@ -38,3 +29,11 @@ lovingly packaged with matching icons, themes, and modular themed dotfile packag
 - `wallpapers`: My current favorite wallpapers, often I like to tweak these a bit for taste
 
 Download the latest release [here](https://github.com/heathershaw821/Heathers-eye-candy/releases)!!!!
+
+### CyberPink <3
+![CyberPink Screenshot](screenshots/screenshot1.png)
+
+
+![CyberPink Screenshot2](screenshots/screenshot2.png)
+
+![CyberPink Screenshot2](screenshots/screenshot3.png)
