@@ -3,8 +3,6 @@
 **Heather's Eye Candy** is a handcrafted set of beautiful, robust themes for women in technology.. Each theme is
 lovingly packaged with matching icons, themes, and modular themed dotfile packages.
 
----
-
 ## Download the latest version on the [Releases Page](https://github.com/heathershaw821/Heathers-eye-candy/releases)
 
 ---
