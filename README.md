@@ -36,6 +36,8 @@ In the [patches folder](./patches) of this repository, you will find patches tha
 
 ---
 
+## Screenshots
+
 ### CyberPink <3
 ![CyberPink Screenshot](screenshots/screenshot1.png)
 
