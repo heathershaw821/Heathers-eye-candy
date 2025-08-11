@@ -21,7 +21,9 @@ lovingly packaged with matching icons, themes, and modular themed dotfile packag
 - `packages`: Modular config bundles
   - Bashrc
   - neovim
-  - xfce4-terminal
+  - ranger
+  - weechat
+  - kitty
   - *And More!!!*
 - `fonts`: A curated collection of amazing Nerd Fonts
 - `wallpapers`: My current favorite wallpapers, often I like to tweak these a bit for taste
